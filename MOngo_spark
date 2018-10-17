@@ -1,0 +1,143 @@
+##https://github.com/datastax/spark-cassandra-connector#version-compatibility
+mak@mak-Aspire-A515-51G:~/spark-2.2.0-bin-hadoop2.7$ mongod --version
+db version v3.6.8
+git version: 6bc9ed599c3fa164703346a22bad17e33fa913e4
+OpenSSL version: OpenSSL 1.0.2n  7 Dec 2017
+allocator: tcmalloc
+modules: none
+build environment:
+    distmod: ubuntu1604
+    distarch: x86_64
+    target_arch: x86_64
+
+mak@mak-Aspire-A515-51G:~/spark-2.2.0-bin-hadoop2.7$ bin/pyspark --packages org.mongodb.spark:mongo-spark-connector_2.11:2.2.0
+Python 3.6.4 |Anaconda, Inc.| (default, Jan 16 2018, 18:10:19) 
+[GCC 7.2.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Ivy Default Cache set to: /home/mak/.ivy2/cache
+The jars for the packages stored in: /home/mak/.ivy2/jars
+:: loading settings :: url = jar:file:/home/mak/spark-2.2.0-bin-hadoop2.7/jars/ivy-2.4.0.jar!/org/apache/ivy/core/settings/ivysettings.xml
+org.mongodb.spark#mongo-spark-connector_2.11 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent;1.0
+	confs: [default]
+	found org.mongodb.spark#mongo-spark-connector_2.11;2.2.0 in central
+	found org.mongodb#mongo-java-driver;3.4.2 in central
+:: resolution report :: resolve 229ms :: artifacts dl 6ms
+	:: modules in use:
+	org.mongodb#mongo-java-driver;3.4.2 from central in [default]
+	org.mongodb.spark#mongo-spark-connector_2.11;2.2.0 from central in [default]
+	---------------------------------------------------------------------
+	|                  |            modules            ||   artifacts   |
+	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+	---------------------------------------------------------------------
+	|      default     |   2   |   0   |   0   |   0   ||   2   |   0   |
+	---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent
+	confs: [default]
+	0 artifacts copied, 2 already retrieved (0kB/6ms)
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/10/15 11:07:02 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/10/15 11:07:02 WARN Utils: Your hostname, mak-Aspire-A515-51G resolves to a loopback address: 127.0.1.1; using 192.168.0.25 instead (on interface wlp3s0)
+18/10/15 11:07:02 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/10/15 11:07:03 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
+18/10/15 11:07:08 WARN ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.2.0
+      /_/
+
+Using Python version 3.6.4 (default, Jan 16 2018 18:10:19)
+SparkSession available as 'spark'.
+>>> from pyspark.sql import SparkSession
+>>> from pyspark.sql import SparkSession
+>>> from pyspark.sql import Row
+>>> from pyspark.sql import functions
+>>> 
+>>> def parseInput(line):
+...     fields = line.split('|')
+...     return Row(user_id = int(fields[0]), age = int(fields[1]), gender = fields[2], occupation = fields[3], zip = fields[4])
+... 
+>>> spark = SparkSession.builder.appName("MongoDBIntegration").getOrCreate()
+>>> lines = spark.sparkContext.textFile("/home/mak/Downloads/hadoop/ml-100k/u.user")
+>>>     # Convert it to a RDD of Row objects with (userID, age, gender, occupation, zip)
+... users = lines.map(parseInput)
+>>>     # Convert that to a DataFrame
+... usersDataset = spark.createDataFrame(users)
+
+>>> 
+>>> usersDataset.write.format("com.mongodb.spark.sql.DefaultSource").option("uri","mongodb://127.0.0.1/movielens.users").mode('append').save()
+>>>                                                                             
+>>> readUsers = spark.read.format("com.mongodb.spark.sql.DefaultSource").option("uri","mongodb://127.0.0.1/movielens.users").load()
+>>> 
+>>> readUsers.createOrReplaceTempView("users")
+>>> sqlDF = spark.sql("SELECT * FROM users WHERE age < 20")
+>>> sqlDF.show()
++--------------------+---+------+----------+-------+-----+
+|                 _id|age|gender|occupation|user_id|  zip|
++--------------------+---+------+----------+-------+-----+
+|[5bc427a4c047fd22...| 18|     F|   student|    482|40256|
+|[5bc427a4c047fd22...| 18|     F|    writer|    507|28450|
+|[5bc427a4c047fd22...| 19|     M|   student|    521|02146|
+|[5bc427a4c047fd22...| 18|     M|   student|    528|55104|
+|[5bc427a4c047fd22...| 19|     F|   student|    541|84302|
+|[5bc427a4c047fd22...| 16|     F|   student|    550|95453|
+|[5bc427a4c047fd22...| 16|     M|   student|    580|17961|
+|[5bc427a4c047fd22...| 17|     M|   student|    582|93003|
+|[5bc427a4c047fd22...| 18|     F|   student|    588|93063|
+|[5bc427a4c047fd22...| 18|     M|   student|    592|97520|
+|[5bc427a4c047fd22...| 19|     F|    artist|    601|99687|
+|[5bc427a4c047fd22...| 13|     F|   student|    609|55106|
+|[5bc427a4c047fd22...| 15|     F|   student|    618|44212|
+|[5bc427a4c047fd22...| 17|     M|   student|    619|44134|
+|[5bc427a4c047fd22...| 18|     F|    writer|    620|81648|
+|[5bc427a4c047fd22...| 17|     M|   student|    621|60402|
+|[5bc427a4c047fd22...| 19|     M|   student|    624|30067|
+|[5bc427a4c047fd22...| 13|     M|      none|    628|94306|
+|[5bc427a4c047fd22...| 18|     F|   student|    631|38866|
+|[5bc427a4c047fd22...| 18|     M|   student|    632|55454|
++--------------------+---+------+----------+-------+-----+
+only showing top 20 rows
+
+>>> spark.stop()
+
+mongo
+> use movielens
+> db.users.find({user_id : 100})
+> db.users.explain().find({user_id : 100})
+there wont be any index in mongo like cassandra
+we nee to create
+> db.users.createIndex({user_id:1 })
+# 1 means ascending
+> db.users.explain().find({user_id : 100})
+
+> db.users.aggregate([ {$group: { _id: {occupation: "$occupation"}, avgAGE:{$avg : "$age"}}} ])
+{ "_id" : { "occupation" : "healthcare" }, "avgAGE" : 41.5625 }
+{ "_id" : { "occupation" : "none" }, "avgAGE" : 26.555555555555557 }
+{ "_id" : { "occupation" : "marketing" }, "avgAGE" : 37.61538461538461 }
+{ "_id" : { "occupation" : "engineer" }, "avgAGE" : 36.38805970149254 }
+{ "_id" : { "occupation" : "artist" }, "avgAGE" : 31.392857142857142 }
+{ "_id" : { "occupation" : "librarian" }, "avgAGE" : 40 }
+{ "_id" : { "occupation" : "programmer" }, "avgAGE" : 33.121212121212125 }
+{ "_id" : { "occupation" : "executive" }, "avgAGE" : 38.71875 }
+{ "_id" : { "occupation" : "writer" }, "avgAGE" : 36.31111111111111 }
+{ "_id" : { "occupation" : "other" }, "avgAGE" : 34.523809523809526 }
+{ "_id" : { "occupation" : "salesman" }, "avgAGE" : 35.666666666666664 }
+{ "_id" : { "occupation" : "entertainment" }, "avgAGE" : 29.22222222222222 }
+{ "_id" : { "occupation" : "educator" }, "avgAGE" : 42.01052631578948 }
+{ "_id" : { "occupation" : "homemaker" }, "avgAGE" : 32.57142857142857 }
+{ "_id" : { "occupation" : "administrator" }, "avgAGE" : 38.74683544303797 }
+{ "_id" : { "occupation" : "student" }, "avgAGE" : 22.081632653061224 }
+{ "_id" : { "occupation" : "retired" }, "avgAGE" : 63.07142857142857 }
+{ "_id" : { "occupation" : "technician" }, "avgAGE" : 33.148148148148145 }
+{ "_id" : { "occupation" : "lawyer" }, "avgAGE" : 36.75 }
+{ "_id" : { "occupation" : "doctor" }, "avgAGE" : 43.57142857142857 }
+Type "it" for more
+> db.users.count()
+> db.getCollectionInfos()
+> db.users.drop()
+true
+
